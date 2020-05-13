@@ -42,6 +42,7 @@ public class UserController {
 
 
     //    Check token
+    @PostMapping("/checkToken")
     public User checkToken(String token) {
         User usr = null;
         boolean time;
