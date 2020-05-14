@@ -11,8 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.*;
 import com.example.account.Response.serverResponse;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
@@ -26,6 +28,7 @@ import java.util.Optional;
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/User")
+@RefreshScope
 public class UserController {
 
     Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -39,6 +42,11 @@ public class UserController {
 
     @Autowired
     private SignUpValidation signUpValidation;
+
+
+
+//    @Autowired
+//    private UserDetailsService userDetailsService;
 
 
     //    Check token
@@ -55,12 +63,16 @@ public class UserController {
     }
 
 
+
+
     // User Registration
     @PostMapping("/UserRegister")
     @HystrixCommand(fallbackMethod = "userRegistrationFallback")
     public ResponseEntity<serverResponse> adduser(@Valid @RequestBody User Customerincomingdata) {
 
+        HttpStatus responsecode = null;
         serverResponse response = new serverResponse();
+
         try {
             Boolean checkEmail = signUpValidation.CheckEmail(Customerincomingdata);
             if (!checkEmail)
@@ -78,18 +90,24 @@ public class UserController {
                 response.setUsertype(usr.getUserPermission());
                 response.setStatus(HttpStatus.OK.value());
                 response.setMessage("Account Created Successfully");
+                responsecode = HttpStatus.OK;
 
             } catch (Exception e) {
+                System.out.println(e);
                 response.setStatus(HttpStatus.CONFLICT.value());
                 response.setMessage("Email-ID already associated with different Account");
+                responsecode = HttpStatus.CONFLICT;
+
             }
         } catch (Exception e) {
-
+            System.out.println(e);
             response.setStatus(HttpStatus.NOT_IMPLEMENTED.value());
             response.setMessage("Email id not valid");
+            responsecode = HttpStatus.NOT_FOUND;
         }
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+
+        return new ResponseEntity<>(response, responsecode);
     }
 
 
@@ -99,6 +117,7 @@ public class UserController {
     public ResponseEntity<serverResponse> addadmin(@Valid @RequestBody User adminincommingdata) {
 
         serverResponse response = new serverResponse();
+        HttpStatus responsecode = null;
         try {
             Boolean checkEmail = signUpValidation.CheckEmail(adminincommingdata);
             if (!checkEmail)
@@ -109,32 +128,36 @@ public class UserController {
                 if (!EmailPresent)
                     throw new IllegalArgumentException();
 
-
                 User usr = userdao.saveAndFlush(adminincommingdata);
 
                 response.setStatus(HttpStatus.OK.value());
                 response.setMessage("Admin created Successfully");
                 response.setUsertype(usr.getUserPermission());
+                responsecode = HttpStatus.OK;
             } catch (Exception e) {
                 response.setStatus(HttpStatus.CONFLICT.value());
                 response.setMessage("Email-ID already associated with different Account");
+                responsecode = HttpStatus.CONFLICT;
 
             }
         } catch (Exception e) {
             response.setStatus(HttpStatus.NOT_IMPLEMENTED.value());
             response.setMessage("Email id not valid");
+            responsecode = HttpStatus.NOT_IMPLEMENTED;
             logger.trace(String.valueOf(e));
 
         }
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response, responsecode);
     }
 
 
     // User Login
     @PostMapping("/UserLogin")
     @HystrixCommand(fallbackMethod = "UserLogingFallback")
-    public ResponseEntity<serverResponse> verifyuser(@Valid @RequestBody Map<String, String> credential) {
+    public ResponseEntity<serverResponse> verifyuser(@Valid @RequestBody Map<String, String> credential) throws Exception {
+
+
         serverResponse response = new serverResponse();
 
         String email = "";
@@ -147,7 +170,11 @@ public class UserController {
             password = credential.get("password");
         }
 
-        User loggedUser = userdao.findByEmailAndPasswordAndUserPermission(email, password, "customer");
+
+
+
+
+      User loggedUser = userdao.findByEmailAndPasswordAndUserPermission(email, password, "customer");
 
         if (loggedUser != null) {
             String jwtToken = jwtutil.createToken(email, password, "customer");
@@ -155,7 +182,8 @@ public class UserController {
             response.setMessage("SUCCESS");
             response.setStatus(HttpStatus.OK.value());
             response.setUsertype("customer");
-        } else {
+        }
+        else {
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
             response.setMessage("Could Not Find User ");
 
@@ -193,13 +221,13 @@ public class UserController {
 
 
     //  Find all user
-    @GetMapping("All_User/{id}")
+        @GetMapping("All_User/{id}")
     public ResponseEntity<serverResponse> find_all(@RequestHeader(name = "Authentication") String token, @PathVariable int id) {
         serverResponse response = new serverResponse();
 
         if (jwtutil.checkToken(token) != null) {
             try {
-                User usr = jwtutil.checkToken(token);
+                User usr = checkToken(token);
                 System.out.println(usr.getEmail().equals("") + " : " + jwtutil.isTokenExpired(token));
                 if (usr.getEmail().equals("") || jwtutil.isTokenExpired(token))
                     throw new NotFoundException("");
@@ -247,7 +275,7 @@ public class UserController {
         serverResponse response = new serverResponse();
         if (jwtutil.checkToken(token) != null) {
             try {
-                User usr = jwtutil.checkToken(token);
+                User usr = checkToken(token);
                 if (usr.getEmail().equals("") || jwtutil.isTokenExpired(token))
                     throw new NotFoundException("");
 
@@ -281,14 +309,14 @@ public class UserController {
         serverResponse response = new serverResponse();
         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
         response.setMessage("Could not Create Account  Right Now ");
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     public ResponseEntity<serverResponse> adminRegistrationFallback(@Valid @RequestBody User adminincommingdata) {
         serverResponse response = new serverResponse();
         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
         response.setMessage("Could not Create Account  Right Now ");
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 
@@ -296,14 +324,14 @@ public class UserController {
         serverResponse response = new serverResponse();
         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
         response.setMessage("Could not Login  Right Now ");
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     public ResponseEntity<serverResponse> adminLogingFallback(@Valid @RequestBody Map<String, String> credential) {
         serverResponse response = new serverResponse();
         response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
         response.setMessage("Could not Login  Right Now ");
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 
