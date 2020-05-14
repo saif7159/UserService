@@ -1,5 +1,9 @@
 package com.example.account.Response;
 
+import com.example.account.Model.User;
+
+import java.util.List;
+
 public class serverResponse {
 
     private int status;
@@ -7,6 +11,15 @@ public class serverResponse {
     private String usertype;
     private String Auth_TOKEN;
     private Object object;
+    private List<User> useralldata;
+
+    public List<User> getUseralldata() {
+        return useralldata;
+    }
+
+    public void setUseralldata(List<User> useralldata) {
+        this.useralldata = useralldata;
+    }
 
 
     public int getStatus() {
