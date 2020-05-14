@@ -18,16 +18,17 @@ import java.util.logging.LogRecord;
 @JsonIgnoreProperties(value = "true")
 public class User implements Serializable {
 
-	private static final long serialVersionUID = -8850740904859933967L;
+    private static final long serialVersionUID = -8850740904859933967L;
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	public int userid;
-	public String name;
-	public String email;
-	public String password;
-	public String userPermission;
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public int userid;
+    public String name;
+    @Column(unique = true)
+    @Email(message = "Incorrect email")
+    public String email;
+    public String password;
+    public String userPermission;
 
 
 }

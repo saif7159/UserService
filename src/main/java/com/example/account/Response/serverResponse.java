@@ -21,7 +21,6 @@ public class serverResponse {
         this.useralldata = useralldata;
     }
 
-
     public int getStatus() {
         return status;
     }
