@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-
 @Component
 public class Util {
 
@@ -28,7 +27,7 @@ public class Util {
     @Autowired
     public UserDaoRepository userdao;
 
-    //    Creating token
+//    Creating token
     public String createToken(String sess_email, String sess_pass, String sess_type) {
         Map<String, Object> map = new HashMap<>();
         map.put(SESS_EMAIL, sess_email);
@@ -40,13 +39,16 @@ public class Util {
 
         return Jwts.builder().setIssuer(ISSUER).setClaims(map).setSubject(SUBJECT)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis()* 1000*60*60*24))
+                .setExpiration(new Date(System.currentTimeMillis()+ 1000*60*60*24))
                 .signWith(algo, Key).compact();
     }
 
-    //    Verifying token
+//    Verifying token
     public User checkToken(String token) {
+        if(token!=null && token.startsWith("Bearer "))
+            token = token.substring(7);
         User user = null;
+        System.out.println("token: "+token);
         try {
             Claims claims = Jwts.parser().setSigningKey(Key).parseClaimsJws(token).getBody();
             user = userdao.findByEmailAndPasswordAndUserPermission(claims.get(SESS_EMAIL).toString(),
@@ -57,8 +59,10 @@ public class Util {
         return user;
     }
 
-    //    Check Expiration date
+//    Check Expiration date
     public boolean isTokenExpired(String token) {
+        if(token!=null && token.startsWith("Bearer "))
+            token = token.substring(7);
         final Date expiration = getExpirationDateFromToken(token);
         return expiration.before(new Date());
     }
