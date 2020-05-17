@@ -64,7 +64,6 @@ public class UserController {
 
 
 
-
     // User Registration
     @PostMapping("/UserRegister")
     @HystrixCommand(fallbackMethod = "userRegistrationFallback")
@@ -221,8 +220,8 @@ public class UserController {
 
 
     //  Find all user
-        @GetMapping("All_User/{id}")
-    public ResponseEntity<serverResponse> find_all(@RequestHeader(name = "Authentication") String token, @PathVariable int id) {
+        @GetMapping("All_User")
+    public ResponseEntity<serverResponse> find_all(@RequestHeader(name = "Authentication") String token) {
         serverResponse response = new serverResponse();
 
         if (jwtutil.checkToken(token) != null) {
@@ -232,7 +231,7 @@ public class UserController {
                 if (usr.getEmail().equals("") || jwtutil.isTokenExpired(token))
                     throw new NotFoundException("");
 
-                if (usr.getUserid() == id && usr.getUserPermission().equals("admin")) {
+                if (usr.getUserPermission().equals("admin")) {
                     List<User> userlst = userdao.findAll();
                     response.setMessage("All data");
                     response.setStatus(HttpStatus.OK.value());
@@ -334,6 +333,9 @@ public class UserController {
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-
+    @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
+    public Optional<User> findById(@PathVariable int id){
+        return userdao.findById(id);
+    }
 
 }
