@@ -332,7 +332,10 @@ public class UserController {
         response.setMessage("Could not Login  Right Now ");
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
+    @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
+    public Optional<User> findById(@PathVariable int id){
+        return userdao.findById(id);
+    }
     
 
 }
