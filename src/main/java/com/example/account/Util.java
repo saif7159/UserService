@@ -17,7 +17,7 @@ import java.util.function.Function;
 @Component
 public class Util {
 
-    private final static String Key = "axWDVrgnYJil";
+    private final static String Key = "secret";
     private final static String ISSUER = "ADMIN_SHOPPING";
     private final static String SUBJECT = "USER_SHOPPING";
     private static final String SESS_EMAIL = "SESSION_EMAIL";
@@ -38,7 +38,7 @@ public class Util {
         SignatureAlgorithm algo = SignatureAlgorithm.HS512;
 
 
-        return Jwts.builder().setIssuer(ISSUER).setClaims(map).setSubject(SUBJECT)
+        return Jwts.builder().setIssuer(ISSUER).setClaims(map).setSubject(sess_email)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis()+ 1000*60*60*24))
                 .signWith(algo, Key).compact();

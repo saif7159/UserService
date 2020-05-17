@@ -14,20 +14,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @SpringBootApplication
 @EnableEurekaClient
-@EnableCircuitBreaker
-@EnableHystrixDashboard
-@EnableCaching
 public class AccountApplication {
-
-    @Bean
-    public WebClient.Builder getWebClientBuilder() {
-        return WebClient.builder();
-    }
-
-    @Bean
-    public CacheManager cacheManager() {
-        return new ConcurrentMapCacheManager();
-    }
 
 
     public static void main(String[] args) {
